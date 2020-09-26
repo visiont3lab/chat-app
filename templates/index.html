@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+
+{% block title %}Flask Socket IO Chat App{% endblock %}
+{% block lib %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>      
+<style>
+    #display-messages{
+        border: 2px solid blue;
+        max-height: 400px;
+        overflow-y: scroll;
+    }
+    .header {
+        display: flex;
+        background-color: blueviolet;
+    }
+    #message-send-box{
+        flex: 1;
+    }
+    .message-receive-box-div{
+        border: 2px solid black;
+        padding: 20px;
+    }
+
+    .message-receive-box-mine{
+        border: 2px solid yellow;
+        padding: 20px;
+    }
+
+    .message-receive-box-others{
+        border: 2px solid green;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+    <h3> Chat Messages</h1>
+    <input type="input" id="username" placeholder="username"><br>      
+    <!--<input type="input" id="room" placeholder="room"><br>  -->   
+    <div id="display-messages"> Messages </div>
+    <div class="header">
+        <input type="input" id="message-send-box" placeholder="message" autofocus><br>  
+        <button type="button" id="btn-send">Send</button>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        var username = document.getElementById('username').value;
+        var protocol = window.location.protocol;
+        var socket = io.connect(protocol + '//' + document.domain + ':' + location.port);
+        socket.on( 'connect', function() {
+            console.log("Connected = ", socket.connected); // true
+            
+            socket.emit( 'connected', {
+                data: 'Connected',
+            })
+        })
+
+        document.getElementById('btn-send').addEventListener('click', () => {
+            username = document.getElementById('username').value;
+            if (!username){
+                username = "Default User"
+            }
+            /*var room = document.getElementById('room').value;
+            if (!room){
+                room = "Default Room"
+            }*/
+            socket.emit('incoming-msg', 
+                {'msg': document.getElementById('message-send-box').value,
+                'username': username} )
+                //'room': room});
+
+            document.getElementById('message-send-box').value = '';
+        })
+
+          // Display all incoming messages
+        socket.on('message', data => {
+            console.log( data)
+            if (data.msg) {
+                const div = document.createElement('div')
+                div.setAttribute('class', 'message-receive-box-div')
+                const p = document.createElement('p');
+                console.log(data.username, username)
+                if (data.username==username){
+                    p.setAttribute('class', 'message-receive-box-mine')
+                }
+                else{
+                    p.setAttribute('class', 'message-receive-box-others')
+                }
+                
+                const span_username = document.createElement('span');
+                const span_timestamp = document.createElement('span');
+                const br = document.createElement('br')
+        
+                span_username.innerText = data.username;
+                span_timestamp.innerText = data.time_stamp;
+                p.innerHTML += span_username.outerHTML + " " +span_timestamp.outerHTML + br.outerHTML + data.msg
+                div.append(p)
+                document.getElementById('display-messages').append(div);
+                scrollDownChatWindow()
+            }
+        });
+        
+        document.getElementById('message-send-box').addEventListener("keyup", function(event) {
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+                // Cancel the default action, if needed
+                event.preventDefault();
+                // Trigger the button element with a click
+                document.getElementById("btn-send").click();
+            }
+        });
+
+         // Scroll chat window down
+        function scrollDownChatWindow() {
+            const chatWindow = document.getElementById("display-messages");
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    })
+
+    </script>
+{% endblock %}

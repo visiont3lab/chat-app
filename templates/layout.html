@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}{% endblock %}</title>
+        <style>
+            body   { font-family: sans-serif; background-color: #204051; color: white; margin : 10px 150px 10px  150px;}
+
+            .row {
+                display: flex;
+            }
+            .column {
+                flex: 50%;
+            }
+            .container {
+                border: 2px solid red;
+                /*margin: 10px !important;*/
+                /*margin: 10px !important;*/
+                /*box-shadow: 2px 2px 2px lightgray;*/
+            }
+            
+            @media only screen and (max-width: 1400px) {
+                body {
+                    margin : 10px 10px 10px 10px;
+                }
+                .row{
+                    flex-direction: column;
+                }
+            }
+        </style>
+          {% block lib%}
+          {% endblock %}
+    </head>
+    <body>
+        {% block content%}
+        {% endblock %}
+    </body>
+</html>
