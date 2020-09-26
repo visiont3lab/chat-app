@@ -9,6 +9,7 @@ socketio = SocketIO(app)
 
 @socketio.on('connected')
 def handle_connected(json, methods=['GET', 'POST']):
+    #print("Risultati: ", json["data"]["m"])
     print('[Event]: ',  str(json))
 
 @app.errorhandler(404)
@@ -26,6 +27,7 @@ def on_message(data):
     # Set timestamp
     time_stamp = time.strftime('%b-%d %I:%M%p', time.localtime())
     socketio.emit('message', {"username": username, "msg": msg, "time_stamp": time_stamp})
+    #socketio.emit('message', {"msg": msg, "time_stamp": time_stamp})  
     #send({"username": username, "msg": msg, "time_stamp": time_stamp}, room=room)
 
 @app.route('/')
@@ -33,4 +35,4 @@ def sessions():
     return render_template('index.html')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
