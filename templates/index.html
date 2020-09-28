@@ -5,31 +5,54 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>      
 <style>
     #display-messages{
-        border: 2px solid blue;
+        /*border: 2px solid blue;*/
         max-height: 400px;
         overflow-y: scroll;
     }
     .header {
         display: flex;
-        background-color: blueviolet;
     }
     #message-send-box{
         flex: 1;
+        overflow: auto;
+        color: white;
+        background-color:transparent;
+        border: none;
+    }
+    #username{
+        flex: 1;
     }
     .message-receive-box-div{
-        border: 2px solid black;
-        padding: 20px;
+        /*border: 2px solid black;*/
+        padding: 5px;
     }
 
     .message-receive-box-mine{
-        border: 2px solid yellow;
-        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid yellow;
+        box-shadow: 1px 1px 1px #999;    
+        color: white;
+        background-color:transparent;
+        min-height:30px;
+        height:auto;
+        overflow: auto;
     }
 
     .message-receive-box-others{
-        border: 2px solid green;
-        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid green;
+        box-shadow: 1px 1px 1px #999;    
+        color: white;
+        background-color:transparent;
+        min-height:30px;
+        height:auto;
+        overflow: auto;
     }
+
+    .userinfo{
+        font-size: 12px;
+    }
+
 </style>
 {% endblock %}
 
@@ -37,11 +60,23 @@
 {% block content %}
 <div class="container">
     <h3> Chat Messages</h1>
-    <input type="input" id="username" placeholder="username"><br>      
+
+    <div class="header">        
+        <input type="input" id="username" value="Anyone" placeholder="username"><br>      
+        <select id="room" name=rooms> <!--method="GET" action="/"-->
+            <option value="None" selected>None</option>
+            {% for room in rooms %}
+                <option value={{room}}>{{room}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
     <!--<input type="input" id="room" placeholder="room"><br>  -->   
-    <div id="display-messages"> Messages </div>
+    <div id="display-messages"> </div>
     <div class="header">
-        <input type="input" id="message-send-box" placeholder="message" autofocus><br>  
+
+        <textarea  id="message-send-box" contenteditable="true" rows = "3" cols = "60" wrap=soft placeholder="message"autofocus></textarea>
+        <!--<input type="text" id="message-send-box" placeholder="message" autofocus><br> --> 
         <button type="button" id="btn-send">Send</button>
     </div>
 </div>
@@ -50,6 +85,7 @@
         var username = document.getElementById('username').value;
         var protocol = window.location.protocol;
         var socket = io.connect(protocol + '//' + document.domain + ':' + location.port);
+  
         socket.on( 'connect', function() {
             console.log("Connected = ", socket.connected); // true
             
@@ -63,14 +99,12 @@
             if (!username){
                 username = "Default User"
             }
-            /*var room = document.getElementById('room').value;
-            if (!room){
-                room = "Default Room"
-            }*/
+            var room = document.getElementById('room').options[document.getElementById('room').selectedIndex].value
+
             socket.emit('incoming-msg', 
                 {'msg': document.getElementById('message-send-box').value,
-                'username': username} )
-                //'room': room});
+                'username': username,
+                'room': room});
 
             document.getElementById('message-send-box').value = '';
         })
@@ -81,7 +115,7 @@
             if (data.msg) {
                 const div = document.createElement('div')
                 div.setAttribute('class', 'message-receive-box-div')
-                const p = document.createElement('p');
+                const p = document.createElement('textarea');
                 console.log(data.username, username)
                 if (data.username==username){
                     p.setAttribute('class', 'message-receive-box-mine')
@@ -90,14 +124,13 @@
                     p.setAttribute('class', 'message-receive-box-others')
                 }
                 
-                const span_username = document.createElement('span');
-                const span_timestamp = document.createElement('span');
-                const br = document.createElement('br')
-        
-                span_username.innerText = data.username;
-                span_timestamp.innerText = data.time_stamp;
-                p.innerHTML += span_username.outerHTML + " " +span_timestamp.outerHTML + br.outerHTML + data.msg
+                const userinfo = document.createElement('div');
+                userinfo.setAttribute('class', 'userinfo')
+                userinfo.innerHTML = data.username + " " + data.time_stamp;
+                p.innerHTML = data.msg
+                div.append(userinfo)
                 div.append(p)
+                
                 document.getElementById('display-messages').append(div);
                 scrollDownChatWindow()
             }
@@ -113,6 +146,16 @@
             }
         });
 
+        document.getElementById('room').addEventListener('change',() => {
+            var room = document.getElementById('room').options[document.getElementById('room').selectedIndex].value
+            if (room!="None"){
+                var username = document.getElementById('username').value;
+                socket.emit( 'join', {
+                    username: username,
+                    room: room
+                })
+            }
+        })
          // Scroll chat window down
         function scrollDownChatWindow() {
             const chatWindow = document.getElementById("display-messages");
