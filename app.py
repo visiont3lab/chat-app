@@ -79,8 +79,8 @@ def on_image(data):
     decoded_image_data = base64.decodebytes(base64_img_bytes)
 
     # save incoming image
-    with open('test.png', 'wb') as file_to_save:
-        file_to_save.write(decoded_image_data)
+    #with open('test.png', 'wb') as file_to_save:
+    #    file_to_save.write(decoded_image_data)
 
     # Opencv
     nparr = np.fromstring(decoded_image_data, np.uint8)

@@ -17,7 +17,7 @@
         overflow: auto;
         color: white;
         background-color:transparent;
-        border: none;
+        border: 1px solid lightblue;
     }
     #username{
         flex: 1;
@@ -26,7 +26,6 @@
         /*border: 2px solid black;*/
         padding: 5px;
     }
-
     .message-receive-box-mine{
         border-radius: 5px;
         border: 1px solid yellow;
@@ -37,7 +36,6 @@
         height:auto;
         overflow: auto;
     }
-
     .message-receive-box-others{
         border-radius: 5px;
         border: 1px solid green;
@@ -52,7 +50,6 @@
     .userinfo{
         font-size: 12px;
     }
-
     .container-image{
         display: flex;
         flex-direction: column;
@@ -79,7 +76,7 @@
     </div>
 
     <div class="container-image">
-        <input id="b" type="button" disabled="true" value="Take Picture"></input>
+        <input id="b" type="button" disabled="true" value="Send Image"></input>
         <video id="v" width="200"></video>
         <canvas id="c" style="display:none;" width="640" height="480"></canvas>
         <img id="photo" width="200">
@@ -92,7 +89,6 @@
 
         <textarea  id="message-send-box" contenteditable="true" rows = "3" cols = "60" wrap=soft placeholder="message"autofocus></textarea>
         <!--<input type="text" id="message-send-box" placeholder="message" autofocus><br> --> 
-        <button type="button" id="btn-catpure">Capture</button>
         <button type="button" id="btn-send">Send</button>
     </div>
 
@@ -226,5 +222,5 @@
         }
     })
 
-    </script>
+</script>
 {% endblock %}
