@@ -2,6 +2,10 @@ import os
 import time
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_socketio import SocketIO, join_room, leave_room, send
+import cv2
+import base64
+import io
+import numpy as np
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
@@ -19,7 +23,6 @@ def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('404.html')
 
-
 @socketio.on('incoming-msg')
 def on_message(data):
     """Broadcast messages"""
@@ -30,7 +33,7 @@ def on_message(data):
     time_stamp = time.strftime('%b-%d %I:%M%p', time.localtime())
     #socketio.emit('message', {"username": username, "msg": msg, "time_stamp": time_stamp})
     #socketio.emit('message', {"msg": msg, "time_stamp": time_stamp})  
-    send({"username": username, "msg": msg, "time_stamp": time_stamp}, room=room)
+    send({"username": username, "msg": msg, "image": "", "time_stamp": time_stamp}, room=room)
 
 @app.route('/',methods=['GET'])
 def sessions():
@@ -62,5 +65,47 @@ def on_leave(data):
     send({"msg": username + " has left the room"}, room=room)
 
 
+@socketio.on('image-processing')
+def on_image(data):
+    data_url = data["image"]
+    room = data["room"]
+    username = data["username"]
+    time_stamp = time.strftime('%b-%d %I:%M%p', time.localtime())
+    #socketio.emit('message', {"username": username, "msg": msg, "time_stamp": time_stamp})
+    #socketio.emit('message', {"msg": msg, "time_stamp": time_stamp})  
+
+    base64_img = data_url.replace('data:image/png;base64,','')
+    base64_img_bytes = base64_img.encode('utf-8')
+    decoded_image_data = base64.decodebytes(base64_img_bytes)
+
+    # save incoming image
+    with open('test.png', 'wb') as file_to_save:
+        file_to_save.write(decoded_image_data)
+
+    # Opencv
+    nparr = np.fromstring(decoded_image_data, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR) # cv2.IMREAD_COLOR in OpenCV 3.1
+
+
+
+    # -------------------------------------------------------
+    # Algoritm
+    img = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+
+
+
+
+
+    # -------------------------------------------------------
+    cv2.imwrite("img.png",img)
+    image = open('img.png', 'rb')
+    image_read = image.read()
+    image_64_encode = base64.encodestring(image_read)
+    image_64_decode = base64.decodestring(image_64_encode) 
+    #img_uri = "data:image/png;base64," + base64.b64encode(img).decode('utf-8') 
+    #img_uri =  base64.b64encode(img)
+    send({"username": username, "msg": "",  "image": image_64_decode, "time_stamp": time_stamp}, room=room)
+
+
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

@@ -6,7 +6,7 @@
 <style>
     #display-messages{
         /*border: 2px solid blue;*/
-        max-height: 400px;
+        max-height: 350px;
         overflow-y: scroll;
     }
     .header {
@@ -53,6 +53,13 @@
         font-size: 12px;
     }
 
+    .container-image{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      justify-content: center;
+    }
+    
 </style>
 {% endblock %}
 
@@ -70,18 +77,57 @@
             {% endfor %}
         </select>
     </div>
-    
+
+    <div class="container-image">
+        <input id="b" type="button" disabled="true" value="Take Picture"></input>
+        <video id="v" width="200"></video>
+        <canvas id="c" style="display:none;" width="640" height="480"></canvas>
+        <img id="photo" width="200">
+    </div>
+
+ 
     <!--<input type="input" id="room" placeholder="room"><br>  -->   
     <div id="display-messages"> </div>
     <div class="header">
 
         <textarea  id="message-send-box" contenteditable="true" rows = "3" cols = "60" wrap=soft placeholder="message"autofocus></textarea>
         <!--<input type="text" id="message-send-box" placeholder="message" autofocus><br> --> 
+        <button type="button" id="btn-catpure">Capture</button>
         <button type="button" id="btn-send">Send</button>
     </div>
+
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+
+        function b64(e){var t="";var n=new Uint8Array(e);var r=n.byteLength;for(var i=0;i<r;i++){t+=String.fromCharCode(n[i])}return window.btoa(t)}
+
+        navigator.getUserMedia({video: true, audio: false}, function(stream) {
+		var video = document.getElementById("v");
+		var canvas = document.getElementById("c");
+		var button = document.getElementById("b");
+        var photo = document.getElementById('photo');
+
+        video.srcObject = stream;
+        video.play();
+
+		button.disabled = false;
+		button.onclick = function() {
+
+            var username = document.getElementById('username').value;
+            var room = document.getElementById('room').options[document.getElementById('room').selectedIndex].value
+			canvas.getContext("2d").drawImage(video, 0, 0);
+			    var img = canvas.toDataURL("image/png");
+                console.log(username, room)
+                socket.emit( 'image-processing', {
+                    username: username,
+                    room: room,
+                    image: img
+                })
+                //photo.setAttribute('src', img);
+            };
+        }, function(err) { alert("there was an error " + err)});
+
         var username = document.getElementById('username').value;
         var protocol = window.location.protocol;
         var socket = io.connect(protocol + '//' + document.domain + ':' + location.port);
@@ -111,28 +157,45 @@
 
           // Display all incoming messages
         socket.on('message', data => {
-            console.log( data)
-            if (data.msg) {
+            //console.log( data)
+            if (data.msg  || data.image) {
                 const div = document.createElement('div')
                 div.setAttribute('class', 'message-receive-box-div')
-                const p = document.createElement('textarea');
-                console.log(data.username, username)
-                if (data.username==username){
-                    p.setAttribute('class', 'message-receive-box-mine')
+
+                var p;
+                if (data.msg){
+                    p = document.createElement('textarea');
+                    //console.log(data.username, username)
+                    if (data.username==username){
+                        p.setAttribute('class', 'message-receive-box-mine')
+                    }
+                    else{
+                        p.setAttribute('class', 'message-receive-box-others')
+                    }
+                    p.innerHTML = data.msg
                 }
-                else{
-                    p.setAttribute('class', 'message-receive-box-others')
+                if (data.image){
+                    p = document.createElement('img');
+                    if (data.username==username){
+                        p.setAttribute('class', 'message-receive-box-mine')
+                    }
+                    else{
+                        p.setAttribute('class', 'message-receive-box-others')
+                    }
+                    //console.log(data.image)
+                    p.width = 200
+                    p.src = "data:image/png;base64," + b64(data.image);                    
                 }
-                
+            
                 const userinfo = document.createElement('div');
                 userinfo.setAttribute('class', 'userinfo')
                 userinfo.innerHTML = data.username + " " + data.time_stamp;
-                p.innerHTML = data.msg
                 div.append(userinfo)
                 div.append(p)
                 
                 document.getElementById('display-messages').append(div);
                 scrollDownChatWindow()
+                
             }
         });
         
