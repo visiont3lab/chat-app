@@ -30,4 +30,34 @@ class algorithm:
         return im
 
 
+    def find_face_profile(self,im):
+        gray = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.1, 5)
+        roi_color=gray
+        for (x,y,w,h) in faces:
+            roi_gray = gray[y:y+h, x:x+w]
+            roi_color = im[y:y+h, x:x+w]
+            
+            ret,thresh = cv2.threshold(roi_gray,40,255,cv2.THRESH_BINARY)
+            thresh = cv2.medianBlur(thresh,15)
+            contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            areas = [cv2.contourArea(c) for c in contours]
+            max_index = np.argmax(areas)
+            cnt=contours[max_index]
+            hull = cv2.convexHull(cnt)
+
+            cv2.drawContours(roi_color, hull, -1, (0,255,0), 3)
+        return roi_color
+
+    def run_blur(self,im):
+        gray = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.1, 5)
+        res = gray
+        for (x,y,w,h) in faces:
+            cv2.rectangle(im,(x,y),(x+w,y+h),(0,0,255),2) # RGB--> BGR
+            roi_gray = gray[y:y+h, x:x+w]
+            roi_color = im[y:y+h, x:x+w]
+            res = cv2.medianBlur(roi_color, 15)
+        return res
 
