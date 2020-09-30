@@ -6,6 +6,11 @@ import cv2
 import base64
 import io
 import numpy as np
+from myLib import algorithm
+
+# Create Class
+alg = algorithm()
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
@@ -90,9 +95,9 @@ def on_image(data):
 
     # -------------------------------------------------------
     # Algoritm
-    img = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+    img = alg.run(img)
 
-
+    # Trovare la faccia e disegnare un quadrato sopra la faccia
 
 
 
